@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+    <style>
+        html,
+        body {
+            overflow-x: hidden;
+        }
+
+        .conteudo {
+            overflow: visible !important;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 420px minmax(0, 1fr);
+            gap: 20px;
+            align-items: stretch;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .metric-card {
+            border-radius: 8px;
+            background: #fff;
+            border: 1px solid #dde4ef;
+            padding: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
+        }
+
+        .metric-title {
+            color: #0056b3;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .left-column {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            align-items: stretch;
+        }
+
+        .panel-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            height: auto;
+        }
+
+        .chart-panel {
+            width: 100%;
+            justify-self: stretch;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .panel-title {
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: #004080;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .status-table thead {
+            background-color: #004080;
+            color: #fff;
+        }
+
+        .status-table th,
+        .status-table td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .chart-wrapper {
+            width: min(100%, 540px);
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+        }
+
+        .chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        @media (max-width: 980px) {
+            .dashboard-layout,
+            .metrics-grid,
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-panel {
+                width: 100%;
+                justify-self: stretch;
+            }
+
+            .chart-wrapper {
+                width: min(100%, 300px);
+            }
+        }
+    </style>
+
+    <div class="dashboard-layout">
+        <div class="left-column">
+            <div class="metrics-grid">
+                <div class="metric-card"><div class="metric-title">Pedido Inicial</div><div class="metric-value">R$ {{ '{:,.2f}'.format(pedido_inicial)|replace(',', 'X')|replace('.', ',')|replace('X', '.')}} </div></div>
+                <div class="metric-card"><div class="metric-title">Pedido Final</div><div class="metric-value">R$ {{ '{:,.2f}'.format(pedido_final)|replace(',', 'X')|replace('.', ',')|replace('X', '.')}} </div></div>
+                <div class="metric-card"><div class="metric-title">Economia 2%</div><div class="metric-value">R$ {{ '{:,.2f}'.format(economia_2)|replace(',', 'X')|replace('.', ',')|replace('X', '.')}} </div></div>
+                <div class="metric-card"><div class="metric-title">HPOD 12%</div><div class="metric-value">R$ {{ '{:,.2f}'.format(hpod_12)|replace(',', 'X')|replace('.', ',')|replace('X', '.')}} </div></div>
+                <div class="metric-card"><div class="metric-title">Glosa nov/2025</div><div class="metric-value">R$ {{ '{:,.2f}'.format(glosa_nov2025)|replace(',', 'X')|replace('.', ',')|replace('X', '.')}} </div></div>
+                <div class="metric-card"><div class="metric-title">HPOD (valor NFSe)</div><div class="metric-value">R$ {{ '{:,.2f}'.format(hpod_nfse)|replace(',', 'X')|replace('.', ',')|replace('X', '.')}} </div></div>
+            </div>
+
+            <div class="status-grid">
+                <div class="panel-card">
+                    <h3 class="panel-title">Contagem por Status</h3>
+                    <table class="status-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Qtd.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background-color:#b9ffd0;">
+                                <td>✔️ Recarga Normal</td>
+                                <td>{{ recarga_normal }}</td>
+                            </tr>
+                            <tr style="background-color:#fdefa0;">
+                                <td>➕ Complemento</td>
+                                <td>{{ complemento }}</td>
+                            </tr>
+                            <tr style="background-color:#fdcbcb;">
+                                <td>✖️ Não Efetuar</td>
+                                <td>{{ nao_efetuar }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card chart-panel">
+            <h3 class="panel-title">Distribuição por Status</h3>
+            <div class="chart-wrapper">
+                <canvas id="statusPie"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script>
+        const ctx = document.getElementById('statusPie').getContext('2d');
+        const statusPie = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['RECARGA NORMAL', 'COMPLEMENTO', 'NÃO EFETUAR RECARGA'],
+                datasets: [{
+                    data: [{{ recarga_normal }}, {{ complemento }}, {{ nao_efetuar }}],
+                    backgroundColor: ['#007bff', '#ffc107', '#dc3545'],
+                    borderColor: '#ffffff',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 400,
+                    easing: 'easeOutQuart'
+                },
+                plugins: {
+                    legend: { display: true, position: 'bottom' },
+                    datalabels: {
+                        color: '#ffffff',
+                        formatter: (value, ctx) => {
+                            const data = ctx.chart.data.datasets[0].data;
+                            const total = data.reduce((acc, num) => acc + num, 0);
+                            const percent = total ? (value / total * 100).toFixed(1) : 0;
+                            return percent + '%';
+                        },
+                        font: {
+                            weight: 'bold',
+                            size: 12
+                        },
+                        anchor: 'end',
+                        align: 'start',
+                        offset: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                        borderRadius: 4,
+                        borderColor: '#ffffff',
+                        borderWidth: 1,
+                        padding: 4,
+                        clip: false,
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                const percentage = total ? (value / total * 100).toFixed(2) : 0;
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+    </script>
+{% endblock %}

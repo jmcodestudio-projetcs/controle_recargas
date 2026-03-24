@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Portal HPOD</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; flex-direction: column; align-items: stretch;}
+        
+        /* Contêiner mestre que dita a largura de toda a página */
+        .page-container {
+            margin: 0 auto;
+            max-width: 95%; /* Ou uma largura fixa como 1600px, se preferires */
+            width: 100%; /* Permite que se expanda até a largura máxima */
+            padding: 0 20px 20px;
+            box-sizing: border-box; /* Inclui padding na largura total */
+            display: flex;
+            flex-direction: column;
+            gap: 0px; /* Sem espaço entre o cabeçalho e o conteúdo, para alinhar perfeitamente */
+        }
+
+        /* Contêiner do Cabeçalho (Banner + Menu) */
+        .header-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Estilo do Banner */
+        .banner { 
+            width: 100%; 
+            max-height: 200px; 
+            object-fit: cover; 
+            display: block; 
+        }
+        
+        /* Estilo do Menu */
+        .menu { 
+            background-color: #002b5e; 
+            overflow: hidden;
+            display: flex; 
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .menu-items {
+            display: flex;
+            justify-content: center;
+            flex-grow: 1; /* Faz os itens do menu ocuparem o espaço disponível, centralizando-os */
+            min-width: 0;
+            flex-wrap: wrap;
+        }
+        .menu a { color: white; text-align: center; padding: 14px 20px; text-decoration: none; font-weight: bold; }
+        .menu a:hover { background-color: #004080; }
+        
+        /* Estilo específico para o botão Sair */
+        .btn-sair {
+            background-color: #cc0000;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: auto; /* Empurra o botão Sair para a direita */
+        }
+        .btn-sair:hover {
+            background-color: #e60000;
+        }
+
+        /* Área onde o conteúdo de cada página vai entrar */
+        .conteudo { 
+            width: 100%; 
+            background-color: transparent; /* Permite que a cor de fundo do body apareça */
+            margin-top: 20px; /* Espaço para o título e filtros */
+            overflow-x: auto; /* Adiciona rolagem horizontal se a tabela for muito larga */
+        }
+
+        @media (max-width: 768px) {
+            .page-container {
+                max-width: 100%;
+                padding: 0 12px 12px;
+            }
+
+            .menu-items {
+                justify-content: flex-start;
+                width: 100%;
+            }
+
+            .menu a,
+            .btn-sair {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            .btn-sair {
+                margin-left: 0;
+            }
+        }
+        
+        /* Estilos genéricos para tabelas e botões que usamos antes, agora dentro da .conteudo */
+        .conteudo table { width: 100%; border-collapse: collapse; font-size: 14px; background: white;}
+        .conteudo th, .conteudo td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .conteudo th { background-color: #004080; color: white; }
+        .conteudo tr:nth-child(even) { background-color: #f2f2f2; }
+        .conteudo .btn-acao { padding: 8px 15px; background: #004080; color: white; border: none; border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block;}
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+
+        <div class="header-container">
+            <img src="{{ url_for('static', filename='banner.png') }}" alt="HPOD" class="banner">
+
+            <div class="menu">
+                <div class="menu-items">
+                    <a href="/lista">Lista de Colaboradores</a>
+                    <a href="/dashboard">Dashboard (Gráficos)</a>
+                    <a href="/arquivos">Upload/Download</a>
+                </div>
+                <a href="/logout" class="btn-sair">Sair</a>
+            </div>
+        </div>
+
+        <div class="conteudo">
+            {% block conteudo %}
+            {% endblock %}
+        </div>
+
+    </div>
+
+</body>
+</html>

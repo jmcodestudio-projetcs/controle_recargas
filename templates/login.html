@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Página de Login</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #0f2f5b 0%, #1b5ca3 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+
+    <div style="width: 100%; max-width: 420px; background: white; border-radius: 12px; box-shadow: 0 12px 25px rgba(0,0,0,0.25); overflow: hidden;">
+        <div style="background: #002b5e; padding: 18px 20px; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: bold; color: #fff; letter-spacing: 0.08em;">HPOD</div>
+            <div style="color: #d1e9ff; font-size: 1rem; margin-top: 4px;">Controle de Recargas</div>
+        </div>
+
+        <div style="padding: 24px 28px;">
+            <form method="POST" action="/login" style="display: grid; gap: 14px;">
+                <div style="text-align: left;">
+                    <label style="font-weight: bold; color: #333;">Usuário</label>
+                    <input type="text" name="usuario" required style="width: 100%; padding: 10px 12px; border: 1px solid #ccd1da; border-radius: 6px; font-size: 1rem; margin-top: 4px;" />
+                </div>
+
+                <div style="text-align: left;">
+                    <label style="font-weight: bold; color: #333;">Senha</label>
+                    <input type="password" name="senha" required style="width: 100%; padding: 10px 12px; border: 1px solid #ccd1da; border-radius: 6px; font-size: 1rem; margin-top: 4px;" />
+                </div>
+
+                <button type="submit" style="background: #0f2f5b; color: white; border: none; border-radius: 6px; padding: 11px; font-weight: bold; font-size: 1rem; cursor: pointer;">Entrar</button>
+            </form>
+
+            {% if erro %}
+                <p style="color: #c0392b; margin-top: 14px; font-weight: bold; text-align: center;">{{ erro }}</p>
+            {% endif %}
+
+            <p style="font-size: 0.9rem; color: #6b7280; text-align: center; margin-top: 16px;">insira usuário e senha para acessar.</p>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+    <h2>Relatório Consolidado de Valores</h2>
+
+    <div style="background-color: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <form method="GET" action="/lista">
+            <label>Nome:</label> <input type="text" name="nome" value="{{ nome_pesquisado }}">
+            <label>CPF:</label> <input type="text" name="cpf" value="{{ cpf_pesquisado }}">
+            <label>Filial:</label> <input type="text" name="filial" value="{{ filial_pesquisada }}" size="5">
+            <label>Nº Cartão:</label> <input type="text" name="cartao" value="{{ cartao_pesquisado }}">
+            <button type="submit" class="btn-acao">Filtrar</button>
+            <a href="/lista" style="margin-left: 10px; color: red; text-decoration: none;">Limpar Filtros</a>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                {% for coluna in colunas %}
+                    {% if coluna == 'CPF' %}
+                        <th style="white-space: nowrap; min-width: 100px;">{{ coluna.replace('\n', '') }}</th>
+                    {% elif coluna == 'Nùmero do Cartão' %}
+                        <th style="white-space: nowrap; min-width: 120px;">{{ coluna.replace('\n', '') }}</th>
+                    {% elif coluna == 'Uso diário' %}
+                        <th style="white-space: nowrap; min-width: 60px;">{{ coluna.replace('\n', '') }}</th>                    {% elif coluna == 'Pedido Final' %}
+                        <th style="white-space: nowrap; min-width: 80px;">{{ coluna.replace('\n', '') }}</th>                    {% elif coluna == 'Pedido Inicial' %}
+                        <th style="white-space: nowrap; min-width: 80px;">{{ coluna.replace('\n', '') }}</th>                    {% else %}
+                        <th>{{ coluna.replace('\n', '') }}</th>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% if not dados %}
+            <tr><td colspan="15" style="text-align: center; color: red;">Nenhum registo encontrado.</td></tr>
+            {% endif %}
+
+            {% for linha in dados %}
+            <tr>
+                {% for coluna in colunas %}
+                    {% set valor = linha[coluna] %}
+                    {% set colunas_monetarias = ['Uso diário', 'Pedido Inicial', 'Total Acumulado', 'Valor economizado', 'Pedido Final'] %}
+                    {% if coluna in colunas_monetarias %}
+                        {% if valor is not none and valor != '' %}
+                            {% set num = (valor|string).replace(',','.')|float %}
+                            {% set formatted = "R$ {:,.2f}".format(num).replace(',', 'temp').replace('.', ',').replace('temp', '.') %}
+                            {% set style = '' %}
+                            {% if coluna == 'Uso diário' %}
+                                {% set style = 'white-space: nowrap; min-width: 60px;' %}
+                            {% elif coluna == 'Pedido Final' %}
+                                {% set style = 'white-space: nowrap; min-width: 80px;' %}
+                            {% elif coluna == 'Pedido Inicial' %}
+                                {% set style = 'white-space: nowrap; min-width: 80px;' %}
+                            {% endif %}
+                            <td{% if style %} style="{{ style }}"{% endif %}>{{ formatted }}</td>
+                        {% else %}
+                            {% set style = '' %}
+                            {% if coluna == 'Uso diário' %}
+                                {% set style = 'white-space: nowrap; min-width: 60px;' %}
+                            {% elif coluna == 'Pedido Final' %}
+                                {% set style = 'white-space: nowrap; min-width: 80px;' %}
+                            {% elif coluna == 'Pedido Inicial' %}
+                                {% set style = 'white-space: nowrap; min-width: 80px;' %}
+                            {% endif %}
+                            <td{% if style %} style="{{ style }}"{% endif %}></td>
+                        {% endif %}
+                    {% else %}
+                        {% set style = '' %}
+                        {% if coluna == 'CPF' %}
+                            {% set style = 'white-space: nowrap; min-width: 100px;' %}
+                        {% elif coluna == 'Nùmero do Cartão' %}
+                            {% set style = 'white-space: nowrap; min-width: 120px;' %}
+                        {% endif %}
+                        <td{% if style %} style="{{ style }}"{% endif %}>{{ valor }}</td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px; text-align: center; font-size: 16px;">
+        {% if total_paginas > 1 %}
+            {% if pagina_atual > 1 %}
+                <a href="/lista?nome={{ nome_pesquisado }}&cpf={{ cpf_pesquisado }}&filial={{ filial_pesquisada }}&cartao={{ cartao_pesquisado }}&page={{ pagina_atual - 1 }}" class="btn-acao">« Anterior</a>
+            {% endif %}
+            
+            <span style="margin: 0 20px; font-weight: bold;">Página {{ pagina_atual }} de {{ total_paginas }}</span>
+            
+            {% if pagina_atual < total_paginas %}
+                <a href="/lista?nome={{ nome_pesquisado }}&cpf={{ cpf_pesquisado }}&filial={{ filial_pesquisada }}&cartao={{ cartao_pesquisado }}&page={{ pagina_atual + 1 }}" class="btn-acao">Próxima »</a>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
