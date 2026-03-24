@@ -1,13 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session
 import pandas as pd
-import math  
+import math
 import os
 import json
 from datetime import datetime
-from werkzeug.utils import secure_filename  
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta_aqui'  # Adicione uma chave secreta para sessões
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-change-me')
 
 @app.before_request
 def require_login():
@@ -15,32 +15,42 @@ def require_login():
     if request.endpoint not in allowed_routes and 'user' not in session:
         return redirect(url_for('home'))
 
-# Configurações de upload
-UPLOAD_FOLDER = 'uploads'
-PROCESSED_FOLDER = 'processed'
-HISTORICO_FILE = 'historico.json'
+# Configurações de paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = BASE_DIR
+if os.getenv('VERCEL'):
+    # Em ambiente serverless da Vercel, gravações só funcionam em /tmp.
+    DATA_DIR = os.path.join('/tmp', 'controle_recargas')
+
+UPLOAD_FOLDER = os.path.join(DATA_DIR, 'uploads')
+PROCESSED_FOLDER = os.path.join(DATA_DIR, 'processed')
+HISTORICO_FILE = os.path.join(DATA_DIR, 'historico.json')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
 
 # Criar pastas se não existirem
+os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
-# O nosso banco de dados de mentirinha
+# Credenciais lidas de variáveis de ambiente (configure no Vercel Dashboard)
 USUARIOS_VALIDOS = {
-    "admin": "1234",
-    "joao": "senha123"
+    "admin": os.getenv("ADMIN_PASSWORD", ""),
+    "joao": os.getenv("JOAO_PASSWORD", ""),
 }
 
 # Funções para histórico
 def carregar_historico():
     if os.path.exists(HISTORICO_FILE):
-        with open(HISTORICO_FILE, 'r') as f:
-            return json.load(f)
+        with open(HISTORICO_FILE, 'r', encoding='utf-8') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
     return []
 
 def salvar_historico(historico):
-    with open(HISTORICO_FILE, 'w') as f:
+    with open(HISTORICO_FILE, 'w', encoding='utf-8') as f:
         json.dump(historico, f, indent=4)
 
 
@@ -49,7 +59,7 @@ def remover_arquivo_se_existir(caminho_arquivo):
         os.remove(caminho_arquivo)
 
 # Configurações do arquivo Excel
-NOME_ARQUIVO = 'RELATORIO VALORES ACUMULADOS HPOD GESTÃOVT MERCADO TORRE - MARÇO 2026 .xlsx'
+NOME_ARQUIVO = os.path.join(BASE_DIR, 'RELATORIO VALORES ACUMULADOS HPOD GESTÃOVT MERCADO TORRE - MARÇO 2026 .xlsx')
 COLUNAS = [
     'Matricula', 'Nome', 'Seção', 'Função', 'CPF', 
     'Nùmero do Cartão', 'Uso diário', 'D', 'F', 

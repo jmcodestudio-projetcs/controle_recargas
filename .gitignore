@@ -1,0 +1,23 @@
+# Ambiente virtual
+venv/
+.venv/
+env/
+
+# Variáveis de ambiente locais
+.env
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Uploads e arquivos processados (dados locais, não vão pro deploy)
+uploads/
+processed/
+
+# VS Code
+.vscode/
+
+# Sistema
+.DS_Store
+Thumbs.db
