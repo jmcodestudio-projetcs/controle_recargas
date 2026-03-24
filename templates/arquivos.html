@@ -15,6 +15,9 @@
     {% elif user == 'admin' %}
     <div style="background-color: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
         <h3>Anexar Arquivos Processados</h3>
+        <form method="POST" action="/admin/limpar_processados" style="margin-bottom: 12px;" onsubmit="return confirm('Deseja realmente limpar todos os itens processados? Esta ação remove arquivos enviados e processados desses itens.');">
+            <button type="submit" class="btn-acao" style="background: #8b0000;">Limpar Todos Processados</button>
+        </form>
         {% for item in historico %}
             {% if not item.arquivo_processado %}
             <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
@@ -54,6 +57,11 @@
                     <td>
                         {% if item.arquivo_processado %}
                             <a href="/download/{{ item.id }}" class="btn-acao">Download</a>
+                        {% endif %}
+                        {% if user == 'admin' %}
+                            <form method="POST" action="/admin/limpar_item/{{ item.id }}" style="display: inline-block; margin-left: 6px;" onsubmit="return confirm('Deseja realmente limpar este item? Esta ação remove os arquivos e a linha do histórico.');">
+                                <button type="submit" class="btn-acao" style="background: #b00020;">Limpar</button>
+                            </form>
                         {% endif %}
                     </td>
                 </tr>

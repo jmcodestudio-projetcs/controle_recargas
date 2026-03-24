@@ -43,6 +43,11 @@ def salvar_historico(historico):
     with open(HISTORICO_FILE, 'w') as f:
         json.dump(historico, f, indent=4)
 
+
+def remover_arquivo_se_existir(caminho_arquivo):
+    if caminho_arquivo and os.path.exists(caminho_arquivo):
+        os.remove(caminho_arquivo)
+
 # Configurações do arquivo Excel
 NOME_ARQUIVO = 'RELATORIO VALORES ACUMULADOS HPOD GESTÃOVT MERCADO TORRE - MARÇO 2026 .xlsx'
 COLUNAS = [
@@ -51,6 +56,59 @@ COLUNAS = [
     'Pedido Inicial', 'Total Acumulado', 'Valor economizado', 
     'Pedido Final', 'Status', 'Filial'
 ]
+
+
+def obter_arquivo_excel_atual():
+    """Retorna o caminho do último arquivo processado pelo admin.
+
+    Ordem de prioridade:
+    1) Último arquivo com data_processamento no histórico
+    2) Arquivo .xlsx mais recente da pasta processed
+    3) NOME_ARQUIVO (fallback legado)
+    """
+    historico = carregar_historico()
+    candidatos_historico = []
+
+    for item in historico:
+        arquivo_processado = item.get('arquivo_processado')
+        if not arquivo_processado:
+            continue
+
+        caminho_processado = os.path.join(PROCESSED_FOLDER, arquivo_processado)
+        if not os.path.exists(caminho_processado):
+            continue
+
+        data_processamento = item.get('data_processamento')
+        try:
+            if data_processamento:
+                instante = datetime.strptime(data_processamento, '%Y-%m-%d %H:%M:%S')
+            else:
+                instante = datetime.fromtimestamp(os.path.getmtime(caminho_processado))
+        except ValueError:
+            instante = datetime.fromtimestamp(os.path.getmtime(caminho_processado))
+
+        candidatos_historico.append((instante, caminho_processado))
+
+    if candidatos_historico:
+        candidatos_historico.sort(key=lambda x: x[0], reverse=True)
+        return candidatos_historico[0][1]
+
+    # Fallback: pega o .xlsx mais recente da pasta de processados
+    arquivos_processados = []
+    for nome in os.listdir(PROCESSED_FOLDER):
+        if nome.lower().endswith('.xlsx'):
+            caminho = os.path.join(PROCESSED_FOLDER, nome)
+            if os.path.isfile(caminho):
+                arquivos_processados.append(caminho)
+
+    if arquivos_processados:
+        return max(arquivos_processados, key=os.path.getmtime)
+
+    # Fallback legado para manter compatibilidade
+    if os.path.exists(NOME_ARQUIVO):
+        return NOME_ARQUIVO
+
+    raise FileNotFoundError('Nenhum arquivo processado pelo admin foi encontrado para leitura.')
 
 @app.route('/')
 def home():
@@ -84,7 +142,8 @@ def lista():
     itens_por_pagina = 50
 
     try:
-        df = pd.read_excel(NOME_ARQUIVO, sheet_name='CONSOLIDADO', header=2, usecols=COLUNAS, dtype=str)
+        arquivo_excel = obter_arquivo_excel_atual()
+        df = pd.read_excel(arquivo_excel, sheet_name='CONSOLIDADO', header=2, usecols=COLUNAS, dtype=str)
         df = df.fillna('')
 
         if filtro_nome: df = df[df['Nome'].str.contains(filtro_nome, case=False)]
@@ -144,7 +203,8 @@ def _to_float(value):
 @app.route('/dashboard')
 def dashboard_graficos():
     try:
-        df = pd.read_excel(NOME_ARQUIVO, sheet_name='CONSOLIDADO', header=2, usecols=COLUNAS, dtype=str)
+        arquivo_excel = obter_arquivo_excel_atual()
+        df = pd.read_excel(arquivo_excel, sheet_name='CONSOLIDADO', header=2, usecols=COLUNAS, dtype=str)
         df = df.fillna('')
 
         # Remover a linha de total/resumo que adiciona soma duplicada no Excel
@@ -272,6 +332,62 @@ def download_uploaded(item_id):
     if item and item['arquivo_enviado']:
         return send_from_directory(app.config['UPLOAD_FOLDER'], item['arquivo_enviado'], as_attachment=True)
     return "Arquivo não encontrado", 404
+
+
+@app.route('/admin/limpar_item/<int:item_id>', methods=['POST'])
+def limpar_item_admin(item_id):
+    user = session.get('user')
+    if user != 'admin':
+        return "Acesso negado", 403
+
+    historico = carregar_historico()
+    item = next((i for i in historico if i['id'] == item_id), None)
+
+    if not item:
+        return "Item não encontrado", 404
+
+    caminho_enviado = os.path.join(app.config['UPLOAD_FOLDER'], item.get('arquivo_enviado', ''))
+    caminho_processado = os.path.join(app.config['PROCESSED_FOLDER'], item.get('arquivo_processado', ''))
+
+    remover_arquivo_se_existir(caminho_enviado)
+    remover_arquivo_se_existir(caminho_processado)
+
+    historico_atualizado = [i for i in historico if i.get('id') != item_id]
+
+    # Reorganiza IDs para manter sequência após exclusão
+    for idx, registro in enumerate(historico_atualizado, start=1):
+        registro['id'] = idx
+
+    salvar_historico(historico_atualizado)
+    return redirect(url_for('arquivos'))
+
+
+@app.route('/admin/limpar_processados', methods=['POST'])
+def limpar_todos_processados_admin():
+    user = session.get('user')
+    if user != 'admin':
+        return "Acesso negado", 403
+
+    historico = carregar_historico()
+    historico_atualizado = []
+
+    for item in historico:
+        if item.get('arquivo_processado'):
+            caminho_enviado = os.path.join(app.config['UPLOAD_FOLDER'], item.get('arquivo_enviado', ''))
+            caminho_processado = os.path.join(app.config['PROCESSED_FOLDER'], item.get('arquivo_processado', ''))
+
+            remover_arquivo_se_existir(caminho_enviado)
+            remover_arquivo_se_existir(caminho_processado)
+            continue
+
+        historico_atualizado.append(item)
+
+    # Reorganiza IDs para manter sequência após exclusão em lote
+    for idx, registro in enumerate(historico_atualizado, start=1):
+        registro['id'] = idx
+
+    salvar_historico(historico_atualizado)
+    return redirect(url_for('arquivos'))
 
 def processar_excel(input_path, output_path):
     # Exemplo de processamento: adicionar coluna "Processado em"

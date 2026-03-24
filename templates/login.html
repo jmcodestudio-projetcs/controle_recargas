@@ -16,15 +16,15 @@
             <form method="POST" action="/login" style="display: grid; gap: 14px;">
                 <div style="text-align: left;">
                     <label style="font-weight: bold; color: #333;">Usuário</label>
-                    <input type="text" name="usuario" required style="width: 100%; padding: 10px 12px; border: 1px solid #ccd1da; border-radius: 6px; font-size: 1rem; margin-top: 4px;" />
+                    <input type="text" name="usuario" required style="display: block; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #ccd1da; border-radius: 6px; font-size: 1rem; margin-top: 4px;" />
                 </div>
 
-                <div style="text-align: left;">
+                <div style="text-align: left;"> 
                     <label style="font-weight: bold; color: #333;">Senha</label>
-                    <input type="password" name="senha" required style="width: 100%; padding: 10px 12px; border: 1px solid #ccd1da; border-radius: 6px; font-size: 1rem; margin-top: 4px;" />
+                    <input type="password" name="senha" required style="display: block; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #ccd1da; border-radius: 6px; font-size: 1rem; margin-top: 4px;" />
                 </div>
 
-                <button type="submit" style="background: #0f2f5b; color: white; border: none; border-radius: 6px; padding: 11px; font-weight: bold; font-size: 1rem; cursor: pointer;">Entrar</button>
+                <button type="submit" style="display: block; width: 100%; box-sizing: border-box; background: #0f2f5b; color: white; border: none; border-radius: 6px; padding: 11px; font-weight: bold; font-size: 1rem; cursor: pointer;">Entrar</button>
             </form>
 
             {% if erro %}
